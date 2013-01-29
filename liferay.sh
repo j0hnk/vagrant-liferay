@@ -14,7 +14,7 @@ cd /usr/local/liferay/
 # Unzip, setup autodeploy and start..
 echo "Unzip /vagrant/${LR}.zip"
 unzip /vagrant/${LR_ZIP} >/dev/null || exit 255
-echo "auto.deploy.dest.dir=/vagrant/liferay/deploy" > /usr/local/liferay/${LR}/${TOMCAT}/webapps/ROOT/WEB-INF/classes/portal-ext.properties
+echo "auto.deploy.deploy.dir=/vagrant/liferay/deploy" > /usr/local/liferay/${LR}/${TOMCAT}/webapps/ROOT/WEB-INF/classes/portal-ext.properties
 chown -R vagrant /usr/local/liferay/${LR}
 echo "Starting tomcat...."
 su - vagrant -c /usr/local/liferay/${LR}/${TOMCAT}/bin/startup.sh
