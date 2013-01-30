@@ -1,4 +1,4 @@
-# Basic Puppet Apache manifest
+# Liferay Puppet Apache manifest
 
 
 class liferay {
@@ -11,9 +11,9 @@ class liferay {
 
 
 	file { ["/vagrant/liferay","/vagrant/liferay/deploy","${liferay_folder}"]:
-		ensure => "directory",
-		owner  => "vagrant",
-		group  => "vagrant",
+		ensure => directory,
+		owner  => vagrant,
+		group  => vagrant,
 	}
 	
 	# ZIP file deployment (two steps), first unzip in /tmp then move data to /opt
@@ -22,13 +22,13 @@ class liferay {
 		command => "unzip -qq /vagrant/${liferay_archive} -d /tmp/",
 		creates	=> "/tmp/liferay-portal-${liferay_version}/data",
 		unless	=> "test -d ${liferay_folder}/data",
-		user	=> "vagrant"
+		user	=> vagrant
 	}
 	exec { "deploy":
 		require => Exec["unzip"],
 		command	=> "mv /tmp/liferay-portal-${liferay_version}/* ${liferay_folder}/",
 		creates	=> "${liferay_folder}/data",
-		user	=> "vagrant"
+		user	=> vagrant
 	}
 
 	# symlink tomcat-VERSION to tomcat, make init script easier to maintain
@@ -40,18 +40,19 @@ class liferay {
 		group	=> vagrant
 	}
 	
-	# symlink portal-ext.properties, to be able to alter it from outside the VM
-	file { "$liferay_folder/portal-ext.properties":
+	# copy portal-ext.properties
+	file { "${liferay_folder}/portal-ext.properties":
 		require => Exec["deploy"],
-		ensure	=> link,
-		target	=> "/vagrant/portal-ext.properties",
+		ensure	=> present,
+		source	=> "/vagrant/portal-ext.properties",
 		owner	=> vagrant,
-		group	=> vagrant
+		group	=> vagrant,
+		mode	=> 655
 	}
 	
 	# install init script
 	file { "/etc/init.d/liferay":
-		ensure	=> "present",
+		ensure	=> present,
 		source	=> "/vagrant/liferay-init",
 		owner	=> root,
 		group	=> root,
@@ -63,7 +64,7 @@ class liferay {
 		require	=> [File["/etc/init.d/liferay"], File["${liferay_folder}/tomcat"], File["$liferay_folder/portal-ext.properties"]],
 		enable	=> true,
 		hasstatus => true,
-		ensure  => "running"
+		ensure  => running
 	}	
 }
 
