@@ -69,19 +69,37 @@ class liferay {
 }
 
 class apt-get-update {
-	exec { "add-repos":
-    		command => "/bin/cp -f /vagrant/sources.list /etc/apt/sources.list"
+	Exec { path => "/bin:/usr/bin" }
+
+	file { "/etc/apt/sources.list":
+		ensure	=> present,
+		source	=> "/vagrant/sources.list"
   	}
+	exec { "add-ppa-key":
+		command	=> "apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 3ACC3965",
+		require => File["/etc/apt/sources.list"],
+		unless	=> "apt-key list | grep 3ACC3965"
+	}
 	exec { "apt-get update":
-		command => "/usr/bin/apt-get update",
-		require	=> Exec["add-repos"]
+		command => "apt-get update",
+		require	=> Exec["add-ppa-key"]
   	}
 }
 
-class openjdk-6-jdk {
-	package { "openjdk-6-jdk":
-		ensure => present,
-		require => Class["apt-get-update"]
+class sun-java6-jdk {
+	Exec { path => "/bin:/usr/bin" }
+
+	exec { "accept-jdk-license":
+		command	=> "echo sun-java6-jdk shared/accepted-sun-dlj-v1-1 select true | debconf-set-selections",
+		unless	=> "debconf-show sun-java6-jdk | grep 'shared/accepted-sun-dlj-v1-1: true'"
+	}
+	exec { "accept-jre-license":
+		command	=> "echo sun-java6-jre shared/accepted-sun-dlj-v1-1 select true | debconf-set-selections",
+		unless	=> "debconf-show sun-java6-jre | grep 'shared/accepted-sun-dlj-v1-1: true'"
+	}
+	package { "sun-java6-jdk":
+		ensure	=> present,
+		require	=> [Exec["accept-jdk-license"], Exec["accept-jre-license"], Class["apt-get-update"]]
 	}
 }
 
@@ -94,5 +112,5 @@ class unzip {
 
 include apt-get-update
 include unzip
-include openjdk-6-jdk
+include sun-java6-jdk
 include liferay
